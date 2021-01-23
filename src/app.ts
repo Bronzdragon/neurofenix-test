@@ -1,4 +1,5 @@
 import arg from "arg"
+import prompts from "prompts"
 import { readFile } from "fs/promises";
 import { exit } from "process";
 
@@ -20,7 +21,15 @@ if(args["--help"]){
 
 const employeeFile = args["--employees"]
 
-console.log(`You want to load employees from '${args["--employees"]}'.`)
-readFile(employeeFile ?? "", 'utf8')
-    .then(JSON.parse)
-    .then(data => console.log(data))
+if(!employeeFile) {
+    prompts({
+        type: 'confirm',
+        name: 'empoyeePath',
+        message: "You didn't specify a path to an employee file. Add some now?"
+    })
+}
+
+//console.log(`You want to load employees from '${args["--employees"]}'.`)
+// readFile(employeeFile ?? "", 'utf8')
+//     .then(JSON.parse)
+//     .then(data => console.log(data))
