@@ -1,6 +1,9 @@
 import arg from "arg"
 import { exit } from "process";
-import { promptForEmployee } from "./Employee";
+import { readFile } from "fs/promises"
+import Employee, { EmployeeRank, promptForEmployee } from "./Employee";
+import EmployeeContainer from "./EmployeeContainer";
+import prompts from "prompts";
 
 const args = arg({
     // Types
@@ -12,20 +15,58 @@ const args = arg({
     '-h': '--help',
 });
 
-if(args["--help"]){
+if (args["--help"]) {
     // display help
     console.log('Usage: call-router [--employees <employee_file>]')
     exit(0);
 }
 
-const employeeFile = args["--employees"]
+const container = new EmployeeContainer()
 
-promptForEmployee()
-    .then(console.log)
+run(container).catch(error => {
+    console.error(error)
+    exit(1)
+})
 
+async function run(container: EmployeeContainer) {
+    const employeeFile = args["--employees"] ?? './empoyeesExample.json'
+    if (employeeFile) {
+        try {
+            const employeeFileText = await readFile(employeeFile, 'utf8')
+            container.addEmployee(parseEmployeesFromJSON(employeeFileText))
+        } catch (error) {
+            throw new Error(`You provided an employee file ('${employeeFile}'), but we could not parse it.`);
 
+        }
+    }
 
-//console.log(`You want to load employees from '${args["--employees"]}'.`)
-// readFile(employeeFile ?? "", 'utf8')
-//     .then(JSON.parse)
-//     .then(data => console.log(data))saf
+    if (container.length < 1) {
+        console.log("No employees found.")
+        while ((await prompts({ type: 'confirm', name: 'value', message: 'Would you like to add some more?', initial: true })).value === true) {
+            container.addEmployee(await promptForEmployee())
+        }
+    }
+
+}
+
+type RawPersonType = {
+    name: string
+    id?: number
+    rank: string
+}
+
+function parseEmployeesFromJSON(input: string) {
+    const props: RawPersonType[] = JSON.parse(input)
+
+    if (!Array.isArray(props)) {
+        throw new Error("The provided file is not in the correct format\n\
+        Make sure it is an array of objects, with a name and rank property, and an optional id.");
+    }
+
+    const employeeObjects = props.map(({ name, id, rank }) => {
+        const convertedRank = EmployeeRank[rank as keyof typeof EmployeeRank] ?? EmployeeRank.junior
+        return new Employee(name, convertedRank, id)
+    })
+
+    return employeeObjects
+}

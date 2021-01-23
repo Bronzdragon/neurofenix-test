@@ -1,14 +1,14 @@
 import prompts from "prompts"
 import Call from "./Call"
 
-enum EmployeeRank {
-    Junior,
-    Senior,
-    Manager,
-    Director
+export enum EmployeeRank {
+    junior,
+    senior,
+    manager,
+    director
 }
 
-enum Availability {
+export enum Availability {
     free,
     inCall,
     away
@@ -22,8 +22,8 @@ export default class Employee {
     #status = Availability.free
     #currentCall: Call | null = null
 
-    constructor(name: string, rank: EmployeeRank, id?: number) {
-        this.id = id ?? getNextId()
+    constructor(name: string, rank: EmployeeRank, id: number = getNextId()) {
+        this.id = id
         this.name = name
         this.rank = rank
     }
@@ -56,14 +56,6 @@ type EmployeePromptType = {
     name: string
 }
 
-const stringToRankMap = {
-    "Junior": EmployeeRank.Junior,
-    "Senior": EmployeeRank.Senior,
-    "Manager": EmployeeRank.Manager,
-    "Director": EmployeeRank.Director,
-} as const
-
-
 export async function promptForEmployee(): Promise<Employee> {
     const questions = [
         {
@@ -76,10 +68,10 @@ export async function promptForEmployee(): Promise<Employee> {
             name: 'rank',
             message: 'What rank is this employee?',
             choices: [
-                { title: 'Junior', value: 'Junior' },
-                { title: 'Senior', value: 'Senior' },
-                { title: 'Manager', value: 'Manager' },
-                { title: 'Director', value: 'Director' },
+                { title: 'Junior', value: 'junior' },
+                { title: 'Senior', value: 'senior' },
+                { title: 'Manager', value: 'manager' },
+                { title: 'Director', value: 'director' },
             ],
         },
         {
@@ -90,9 +82,9 @@ export async function promptForEmployee(): Promise<Employee> {
         }
     ];
 
-
-    
     let { name, rank, id } = await prompts(questions) as EmployeePromptType
+
+    currentId = Math.max(currentId, id)
     console.log("id: ", id)
     console.log("Name: ", name)
     console.log("Rank: ", rank)
