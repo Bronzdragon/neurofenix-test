@@ -1,7 +1,6 @@
 import arg from "arg"
-import prompts from "prompts"
-import { readFile } from "fs/promises";
 import { exit } from "process";
+import { promptForEmployee } from "./Employee";
 
 const args = arg({
     // Types
@@ -21,15 +20,12 @@ if(args["--help"]){
 
 const employeeFile = args["--employees"]
 
-if(!employeeFile) {
-    prompts({
-        type: 'confirm',
-        name: 'empoyeePath',
-        message: "You didn't specify a path to an employee file. Add some now?"
-    })
-}
+promptForEmployee()
+    .then(console.log)
+
+
 
 //console.log(`You want to load employees from '${args["--employees"]}'.`)
 // readFile(employeeFile ?? "", 'utf8')
 //     .then(JSON.parse)
-//     .then(data => console.log(data))
+//     .then(data => console.log(data))saf
