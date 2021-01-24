@@ -1,1 +1,19 @@
-"test"
+[
+    {
+        "name": "David",
+        "rank": "junior",
+        "id": 1
+    },
+    {
+        "name": "Karl Laricksonn",
+        "rank": "senior"
+    },
+    {
+        "name": "John Doe",
+        "rank": "junior"
+    },
+    {
+        "name": "Klaus Gravely",
+        "rank": "senior"
+    }
+]

@@ -1,3 +1,4 @@
+import asTable from "as-table";
 import Employee, { EmployeeRank } from "./Employee";
 
 const employeeRankOrder = [EmployeeRank.junior, EmployeeRank.senior, EmployeeRank.manager, EmployeeRank.director]
@@ -13,6 +14,16 @@ export default class EmployeeContainer {
             this.#employees = this.#employees.concat(employees)
         } else {
             this.#employees.push(employees)
+        }
+    }
+
+    removeEmployee(employees: Employee | Employee[]) {
+        if (!Array.isArray(employees)) {
+            employees = [employees]
+        }
+
+        for (const person of employees) {
+            this.#employees.splice(this.#employees.indexOf(person), 1)
         }
     }
 
@@ -36,4 +47,23 @@ export default class EmployeeContainer {
     get length() {
         return this.#employees.length
     }
+
+    get allEmployees(): Employee[] {
+        return [...this.#employees]
+    }
+
+    print() {
+        return asTable(
+            this.#employees.map(employee => [
+                employee.name,
+                capitalizeFirstLetter(EmployeeRank[employee.rank]),
+                employee.statusText
+            ])
+        )
+    }
+}
+
+function capitalizeFirstLetter(input: string) {
+    const [firstLetter, ...otherLetters] = input
+    return firstLetter.toLocaleUpperCase() + otherLetters.join('').toLocaleLowerCase()
 }

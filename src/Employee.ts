@@ -48,6 +48,19 @@ export default class Employee {
 
         this.#status = isAway ? Availability.away : Availability.free
     }
+
+    get statusText() {
+        switch (this.#status) {
+            case Availability.free:
+                return "Available"
+            case Availability.inCall:
+                return "In a call"
+            case Availability.away:
+                return "Away"
+            default:
+                return ''
+        }
+    }
 }
 
 type EmployeePromptType = {

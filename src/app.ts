@@ -1,7 +1,7 @@
 import arg from "arg"
 import { exit } from "process";
 import { readFile } from "fs/promises"
-import Employee, { EmployeeRank } from "./Employee";
+import Employee, { EmployeeRank, promptForEmployee } from "./Employee";
 import Dispatcher from "./Dispatcher"
 import prompts from "prompts";
 
@@ -34,7 +34,7 @@ async function run(dispatcher: Dispatcher) {
         dispatcher.addEmployee(await getEmployeesFromFile(employeeFile))
     }
 
-    while(await promptMainMenu(dispatcher)){ /* Keep running the main menu. */ }
+    while (await promptMainMenu(dispatcher)) { /* Keep running the main menu. */ }
 }
 
 type RawPersonType = {
@@ -76,17 +76,71 @@ async function promptMainMenu(dispatcher: Dispatcher): Promise<true> {
         name: 'value',
         message: 'What would you like to do?',
         choices: [
-            { title: 'Add employees', value: () => { console.log("We want to add employees (either by file or manual input)") } },
-            { title: 'Show employees', value: () => { console.log("Showing employee status") }, disabled: dispatcher.hasEmployees() },
+            { title: 'Add employees', value: () => promptAddEmployees(dispatcher) },
+            { title: 'Remove employees', value: () => promptRemoveEmployees(dispatcher) },
+            { title: 'Show employees', value: () => promptShowEmployees(dispatcher) },
             { title: 'Show calls', value: () => { console.log("Display the status of all ongoing calls.") } },
             { title: 'Generate calls', value: () => { console.log("Generate new calls to take.") } },
             { title: 'Set automatic call generation', value: () => { console.log("Choose options for automatic call generation..") } },
             { title: 'Quit', value: () => { exit(0) } },
         ],
-        initial: 4
+        // initial: 1
     })
 
-    result.value()
+    await result.value()
 
     return true;
 }
+
+async function promptAddEmployees(dispatcher: Dispatcher) {
+    const { value } = await prompts({
+        type: 'select',
+        name: 'value',
+        message: 'Would you like to load from a file, or enter employees manually?',
+        choices: [
+            { title: 'From file', value: 'file' },
+            { title: 'Manually', value: 'manual' },
+        ],
+    })
+
+    if (value === 'file') {
+        const { path } = await prompts({
+            type: 'text',
+            name: 'path',
+            message: `Path to file...`,
+        })
+
+        dispatcher.addEmployee(await getEmployeesFromFile(path))
+        return;
+    }
+
+    if (value === 'manual') {
+        dispatcher.addEmployee(await promptForEmployee())
+
+        while ((await prompts({
+            type: 'confirm',
+            name: 'result',
+            message: 'Would you like to add another?',
+            initial: true
+        })).result) {
+            dispatcher.addEmployee(await promptForEmployee())
+        }
+    }
+}
+
+async function promptRemoveEmployees(dispatcher: Dispatcher) {
+    const peopleToDelete = await prompts({
+        type: 'multiselect',
+        name: 'value',
+        message: 'Choose the employees to remove.',
+        choices: dispatcher.allEmployees.map(employee => ({ title: employee.name, value: employee })),
+        hint: '- Space to select. Return to submit'
+    })
+
+    dispatcher.removeEmployee(peopleToDelete.value)
+}
+
+function promptShowEmployees(dispatcher: Dispatcher) {
+    console.log(dispatcher.printEmployees())
+}
+
