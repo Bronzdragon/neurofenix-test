@@ -79,9 +79,9 @@ async function promptMainMenu(dispatcher: Dispatcher): Promise<true> {
             { title: 'Add employees', value: () => promptAddEmployees(dispatcher) },
             { title: 'Remove employees', value: () => promptRemoveEmployees(dispatcher) },
             { title: 'Show employees', value: () => promptShowEmployees(dispatcher) },
-            { title: 'Show calls', value: () => { console.log("Display the status of all ongoing calls.") } },
-            { title: 'Generate calls', value: () => { console.log("Generate new calls to take.") } },
-            { title: 'Set automatic call generation', value: () => { console.log("Choose options for automatic call generation..") } },
+            { title: 'Show calls', value: () => promptShowCalls(dispatcher) },
+            { title: 'Generate calls', value: () => promptGenerateCalls(dispatcher) },
+            { title: 'Set automatic call generation', value: () => promptCallGeneratorOptions(dispatcher) },
             { title: 'Quit', value: () => { exit(0) } },
         ],
         // initial: 1
@@ -144,3 +144,14 @@ function promptShowEmployees(dispatcher: Dispatcher) {
     console.log(dispatcher.printEmployees())
 }
 
+function promptShowCalls(dispatcher: Dispatcher) {
+    console.log("TODO: Display the status of all ongoing calls.")
+}
+
+function promptGenerateCalls(dispatcher: Dispatcher) {
+    console.log("TODO: Generate some calls.")
+}
+
+function promptCallGeneratorOptions(dispatcher: Dispatcher) {
+    console.log("TODO: Show options for the generator.")
+}

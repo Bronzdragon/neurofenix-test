@@ -1,4 +1,15 @@
-// TODO: define call.
+export enum Severity {
+    Low,
+    High,
+}
+
+
 export default class Call {
-    constructor() {}
+    #duration: number // Call duration in seconds.
+    #severity: Severity
+
+    constructor(length: number, severity = Severity.Low) {
+        this.#duration = length
+        this.#severity = severity
+    }
 }
