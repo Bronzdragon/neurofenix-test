@@ -8,8 +8,6 @@ export default class EmployeeContainer {
         this.#employees = [...initialEmployees]
     }
 
-    addEmployee(employee: Employee): void
-    addEmployee(employees: Employee[]): void
     addEmployee(employees: Employee | Employee[]) {
         if (Array.isArray(employees)) {
             this.#employees = this.#employees.concat(employees)

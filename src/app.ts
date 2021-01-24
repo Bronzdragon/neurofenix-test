@@ -1,8 +1,8 @@
 import arg from "arg"
 import { exit } from "process";
 import { readFile } from "fs/promises"
-import Employee, { EmployeeRank, promptForEmployee } from "./Employee";
-import EmployeeContainer from "./EmployeeContainer";
+import Employee, { EmployeeRank } from "./Employee";
+import Dispatcher from "./Dispatcher"
 import prompts from "prompts";
 
 const args = arg({
@@ -21,30 +21,17 @@ if (args["--help"]) {
     exit(0);
 }
 
-const container = new EmployeeContainer()
+const container = new Dispatcher()
 
 run(container).catch(error => {
     console.error(error)
     exit(1)
 })
 
-async function run(container: EmployeeContainer) {
-    const employeeFile = args["--employees"] ?? './empoyeesExample.json'
+async function run(dispatcher: Dispatcher) {
+    const employeeFile = args["--employees"]
     if (employeeFile) {
-        try {
-            const employeeFileText = await readFile(employeeFile, 'utf8')
-            container.addEmployee(parseEmployeesFromJSON(employeeFileText))
-        } catch (error) {
-            throw new Error(`You provided an employee file ('${employeeFile}'), but we could not parse it.`);
-
-        }
-    }
-
-    if (container.length < 1) {
-        console.log("No employees found.")
-        while ((await prompts({ type: 'confirm', name: 'value', message: 'Would you like to add some more?', initial: true })).value === true) {
-            container.addEmployee(await promptForEmployee())
-        }
+        dispatcher.addEmployee(await getEmployeesFromFile(employeeFile))
     }
 
 }
@@ -53,6 +40,17 @@ type RawPersonType = {
     name: string
     id?: number
     rank: string
+}
+
+async function getEmployeesFromFile(filePath: string) {
+    let employeeFileText: string;
+    try {
+        employeeFileText = await readFile(filePath, 'utf8')
+    } catch (error) {
+        throw new Error(`We encountered issues reading '${filePath}'. Make sure it's a valid file.`);
+    }
+    return parseEmployeesFromJSON(employeeFileText)
+
 }
 
 function parseEmployeesFromJSON(input: string) {
