@@ -1,6 +1,5 @@
-import asTable from "as-table";
-import Call from "./Call";
-import Employee from "./Employee";
+import Call, { Severity } from "./Call";
+import Employee, { EmployeeRank } from "./Employee";
 import EmployeeContainer from "./EmployeeContainer";
 
 export default class Dispatcher {
@@ -8,6 +7,19 @@ export default class Dispatcher {
     #callQueue: Call[] = []
 
     constructor() { }
+
+    dispatchCall(call: Call) {
+        this.#callQueue.push(call)
+
+        for (const call of this.#callQueue) {
+            const desiredRank = call.severity === Severity.Low ? EmployeeRank.junior : EmployeeRank.manager
+            const employee = this.#container.getAvailableEmpoyee(desiredRank)
+            if (!employee) { continue; }
+
+            employee.takeCall(call)
+            this.dropCall(call)
+        }
+    }
 
     addEmployee(arg: Employee | Employee[]) {
         this.#container.addEmployee(arg)
@@ -23,6 +35,10 @@ export default class Dispatcher {
 
     printEmployees(): string {
         return this.#container.print()
+    }
+
+    dropCall(call: Call) {
+        return this.#callQueue.splice(this.#callQueue.indexOf(call), 1)
     }
 
     get allEmployees(): Employee[] {

@@ -4,6 +4,7 @@ import { readFile } from "fs/promises"
 import Employee, { EmployeeRank, promptForEmployee } from "./Employee";
 import Dispatcher from "./Dispatcher"
 import prompts from "prompts";
+import CallGenerator from "./CallGenerator";
 
 const args = arg({
     // Types
@@ -21,18 +22,26 @@ if (args["--help"]) {
     exit(0);
 }
 
-const container = new Dispatcher()
 
-run(container).catch(error => {
+
+run().catch(error => {
     console.error(error)
     exit(1)
 })
 
-async function run(dispatcher: Dispatcher) {
+
+async function run() {
+    const generator = new CallGenerator()
+    const dispatcher = new Dispatcher()
+
     const employeeFile = args["--employees"]
     if (employeeFile) {
         dispatcher.addEmployee(await getEmployeesFromFile(employeeFile))
     }
+
+    generator.addListener(call => {
+        dispatcher.dispatchCall(call)
+    })
 
     while (await promptMainMenu(dispatcher)) { /* Keep running the main menu. */ }
 }
