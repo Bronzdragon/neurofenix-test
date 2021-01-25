@@ -8,6 +8,8 @@ export default class CallGenerator {
 
     // Ratio of calls that are considered high severity. Higher means more high severity calls
     #severityRatio = 0.25
+    // Ratio of low-priority calls that should upgrade over their lifetime.
+    #upgradeRatio = 0.25
 
     // minimum and maximum length in seconds of a call.
     #minCallLength = 15
@@ -30,7 +32,8 @@ export default class CallGenerator {
     generateNewCall(): Call {
         const callDuration = getRandomInRange(this.#minCallLength, this.#maxCallLength)
         const severity = (Math.random() + this.#severityRatio < 1) ? Severity.Low : Severity.High
-        const call = new Call(callDuration, severity);
+        const shouldUpgrade = severity === Severity.Low && (Math.random() + this.#upgradeRatio > 1)
+        const call = new Call(callDuration, severity, shouldUpgrade);
 
         for (const callback of this.#callbacks) {
             callback(call)

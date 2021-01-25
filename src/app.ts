@@ -154,7 +154,8 @@ function promptShowEmployees(dispatcher: Dispatcher) {
 }
 
 function promptShowCalls(dispatcher: Dispatcher) {
-    console.log("TODO: Display the status of all ongoing calls.")
+    console.log(dispatcher.printCalls())
+    //console.log("TODO: Display the status of all ongoing calls.")
 }
 
 function promptGenerateCalls(dispatcher: Dispatcher) {

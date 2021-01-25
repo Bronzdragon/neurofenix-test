@@ -1,5 +1,5 @@
 import prompts from "prompts"
-import Call from "./Call"
+import Call, { CallEvent } from "./Call"
 
 export enum EmployeeRank {
     junior,
@@ -14,10 +14,18 @@ export enum Availability {
     away
 }
 
+export enum EmployeeEvent {
+    Reject,
+    End
+}
+
 export default class Employee {
     id: number
     name: string
     rank: EmployeeRank
+
+    #rejectCallListeners: Array<(call: Call) => void> = []
+    #endCallListeners: Array<(call: Call) => void> = []
 
     #status = Availability.free
     #currentCall: Call | null = null
@@ -34,11 +42,24 @@ export default class Employee {
 
     takeCall(call: Call) {
         if (!this.available()) {
-            throw new Error("Cannot assign a call, this employee is not available.")
+            return this.rejectCall(call)
         }
 
         this.#status = Availability.inCall
         this.#currentCall = call
+
+        call.addListener(CallEvent.SeverityUpgrade, () => {
+            if (this.rank !== EmployeeRank.manager && this.rank !== EmployeeRank.director) {
+                // This means we're not of the correct rank to take this call.
+                this.rejectCall(call)
+            }
+        })
+
+        call.addListener(CallEvent.End, () => {
+            this.endCall()
+        })
+
+        call.start()
     }
 
     setAway(isAway: boolean) {
@@ -60,6 +81,38 @@ export default class Employee {
             default:
                 return ''
         }
+    }
+
+    private rejectCall(call: Call) {
+        call.stop()
+        for (const callback of this.#rejectCallListeners) {
+            callback(call)
+        }
+
+        this.#status = Availability.free
+        this.#currentCall = null
+    }
+
+    private endCall() {
+        if(!this.#currentCall){ return }
+        this.#currentCall.stop()
+
+        for (const callback of this.#endCallListeners) {
+            callback(this.#currentCall)
+        }
+
+        this.#status = Availability.free
+        this.#currentCall = null
+    }
+
+    addListener(eventType: EmployeeEvent, listener: (call: Call) => void) {
+        const queue = eventType === EmployeeEvent.End ? this.#endCallListeners : this.#rejectCallListeners
+        queue.push(listener)
+    }
+
+    removeListener(eventType: EmployeeEvent, listener: (call: Call) => void) {
+        const queue = eventType === EmployeeEvent.End ? this.#endCallListeners : this.#rejectCallListeners
+        queue.splice(this.#rejectCallListeners.indexOf(listener), 1)
     }
 }
 
