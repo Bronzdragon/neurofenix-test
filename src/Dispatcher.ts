@@ -60,8 +60,18 @@ export default class Dispatcher {
     }
 
     printCalls() {
-        return `${this.#callQueue.length} calls in the queue\n`
-        + this.printEmployees()
+        const lowPrioCallCount = this.#callQueue.filter(call => call.severity === Severity.Low).length
+        const highPrioCallCount = this.#callQueue.length - lowPrioCallCount
+        
+        const returnValue = [
+            lowPrioCallCount + " low priority calls",
+            highPrioCallCount + " high prioprity calls",
+        ]
+
+        if (this.hasEmployees()) {
+            returnValue.push("------", this.printEmployees())
+        }
+        return returnValue.join('\n')
     }
 
     get allEmployees(): Employee[] {

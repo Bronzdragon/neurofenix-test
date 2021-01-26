@@ -22,8 +22,6 @@ if (args["--help"]) {
     exit(0);
 }
 
-
-
 run().catch(error => {
     console.error(error)
     exit(1)
@@ -36,14 +34,17 @@ async function run() {
 
     const employeeFile = args["--employees"]
     if (employeeFile) {
-        dispatcher.addEmployee(await getEmployeesFromFile(employeeFile))
+        const employees = await getEmployeesFromFile(employeeFile)
+        if (employees) {
+            dispatcher.addEmployee(employees)
+        }
     }
 
     generator.addListener(call => {
         dispatcher.dispatchCall(call)
     })
 
-    while (await promptMainMenu(dispatcher)) { /* Keep running the main menu. */ }
+    while (await promptMainMenu(dispatcher, generator)) { /* Keep running the main menu. */ }
 }
 
 type RawPersonType = {
@@ -52,15 +53,16 @@ type RawPersonType = {
     rank: string
 }
 
-async function getEmployeesFromFile(filePath: string) {
+async function getEmployeesFromFile(filePath: string): Promise<Employee[] | null> {
     let employeeFileText: string;
     try {
         employeeFileText = await readFile(filePath, 'utf8')
+        return parseEmployeesFromJSON(employeeFileText)
     } catch (error) {
-        throw new Error(`We encountered issues reading '${filePath}'. Make sure it's a valid file.`);
+        console.error(`We encountered issues reading '${filePath}'. Make sure it's a valid file.`)
+        //throw new Error(`We encountered issues reading '${filePath}'. Make sure it's a valid file.`);
     }
-    return parseEmployeesFromJSON(employeeFileText)
-
+    return null
 }
 
 function parseEmployeesFromJSON(input: string) {
@@ -79,18 +81,18 @@ function parseEmployeesFromJSON(input: string) {
     return employeeObjects
 }
 
-async function promptMainMenu(dispatcher: Dispatcher): Promise<true> {
+async function promptMainMenu(dispatcher: Dispatcher, generator: CallGenerator): Promise<true> {
     const result = await prompts({
         type: 'select',
         name: 'value',
         message: 'What would you like to do?',
         choices: [
             { title: 'Add employees', value: () => promptAddEmployees(dispatcher) },
-            { title: 'Remove employees', value: () => promptRemoveEmployees(dispatcher) },
-            { title: 'Show employees', value: () => promptShowEmployees(dispatcher) },
+            { title: 'Remove employees', disabled: !dispatcher.hasEmployees(), value: () => promptRemoveEmployees(dispatcher) },
+            { title: 'Show employees', disabled: !dispatcher.hasEmployees(), value: () => promptShowEmployees(dispatcher) },
             { title: 'Show calls', value: () => promptShowCalls(dispatcher) },
-            { title: 'Generate calls', value: () => promptGenerateCalls(dispatcher) },
-            { title: 'Set automatic call generation', value: () => promptCallGeneratorOptions(dispatcher) },
+            { title: 'Generate calls', value: () => promptGenerateCalls(generator, dispatcher) },
+            { title: 'Set the options for automatic call generation', value: () => promptCallGeneratorOptions(generator) },
             { title: 'Quit', value: () => { exit(0) } },
         ],
         // initial: 1
@@ -110,6 +112,7 @@ async function promptAddEmployees(dispatcher: Dispatcher) {
             { title: 'From file', value: 'file' },
             { title: 'Manually', value: 'manual' },
         ],
+        initial: 1
     })
 
     if (value === 'file') {
@@ -118,8 +121,10 @@ async function promptAddEmployees(dispatcher: Dispatcher) {
             name: 'path',
             message: `Path to file...`,
         })
-
-        dispatcher.addEmployee(await getEmployeesFromFile(path))
+        const employees = await getEmployeesFromFile(path)
+        if (employees) {
+            dispatcher.addEmployee(employees)
+        }
         return;
     }
 
@@ -166,10 +171,42 @@ function promptShowCalls(dispatcher: Dispatcher) {
     //console.log("TODO: Display the status of all ongoing calls.")
 }
 
-function promptGenerateCalls(dispatcher: Dispatcher) {
-    console.log("TODO: Generate some calls.")
+function promptGenerateCalls(generator: CallGenerator, dispatcher: Dispatcher) {
+    return generator.promptGenerateCalls()
 }
 
-function promptCallGeneratorOptions(dispatcher: Dispatcher) {
-    console.log("TODO: Show options for the generator.")
+async function promptCallGeneratorOptions(generator: CallGenerator) {
+    let done = false;
+    do {
+        const { choice } = await prompts({
+            type: 'select',
+            name: 'choice',
+            message: 'Which option would you like to adjust?',
+            choices: [
+                { title: 'Time between calls.', value: 'time' },
+                { title: 'Length of calls.', value: 'length' },
+                { title: 'Ratio of the call severity.', value: 'severity' },
+                { title: 'Ratio of calls that upgrade in severity.', value: 'upgrade' },
+                { title: 'Go back.', value: 'back' },
+            ],
+        })
+
+        switch (choice) {
+            case 'time':
+                await generator.promptTime()
+                break;
+            case 'length':
+                await generator.promptLength()
+                break;
+            case 'severity':
+                await generator.promptSeverity()
+                break;
+            case 'upgrade':
+                await generator.promptUpgrade()
+                break;
+            case 'back': // falls through
+            default:
+                done = true;
+        }
+    } while (!done)
 }

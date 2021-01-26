@@ -53,12 +53,12 @@ export default class EmployeeContainer {
     }
 
     print() {
-        return asTable(
-            this.#employees.map(employee => [
-                employee.name,
-                capitalizeFirstLetter(EmployeeRank[employee.rank]),
-                employee.statusText
-            ])
+        return asTable.configure({ delimiter: ' | ' })(
+            this.#employees.map(employee => ({
+                Name: employee.name,
+                Rank: capitalizeFirstLetter(EmployeeRank[employee.rank]),
+                Status: employee.statusText,
+            }))
         )
     }
 }
