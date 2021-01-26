@@ -122,7 +122,7 @@ type EmployeePromptType = {
     name: string
 }
 
-export async function promptForEmployee(): Promise<Employee> {
+export async function promptForEmployee(): Promise<Employee|null> {
     const questions = [
         {
             type: 'text' as const,
@@ -149,6 +149,7 @@ export async function promptForEmployee(): Promise<Employee> {
     ];
 
     let { name, rank, id } = await prompts(questions) as EmployeePromptType
+    if(!name || !rank || !id) return null;
 
     currentId = Math.max(currentId, id)
     console.log("id: ", id)

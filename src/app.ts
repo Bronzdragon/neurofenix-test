@@ -124,7 +124,10 @@ async function promptAddEmployees(dispatcher: Dispatcher) {
     }
 
     if (value === 'manual') {
-        dispatcher.addEmployee(await promptForEmployee())
+        const employee = await promptForEmployee()
+        if (employee) {
+            dispatcher.addEmployee(employee)
+        }
 
         while ((await prompts({
             type: 'confirm',
@@ -132,7 +135,12 @@ async function promptAddEmployees(dispatcher: Dispatcher) {
             message: 'Would you like to add another?',
             initial: true
         })).result) {
-            dispatcher.addEmployee(await promptForEmployee())
+            const employee = await promptForEmployee()
+            if (employee) {
+                dispatcher.addEmployee(employee)
+            } else {
+                break;
+            }
         }
     }
 }
