@@ -29,6 +29,7 @@ export default class Employee {
 
     #status = Availability.free
     #currentCall: Call | null = null
+    #lastInCall: Date | null = null
 
     constructor(name: string, rank: EmployeeRank, id: number = getNextId()) {
         this.id = id
@@ -83,6 +84,10 @@ export default class Employee {
         }
     }
 
+    get lastInCall() {
+        return this.#lastInCall
+    }
+
     private rejectCall(call: Call) {
         call.stop()
         for (const callback of this.#rejectCallListeners) {
@@ -91,6 +96,7 @@ export default class Employee {
 
         this.#status = Availability.free
         this.#currentCall = null
+        this.#lastInCall = new Date()
     }
 
     private endCall() {
@@ -103,6 +109,7 @@ export default class Employee {
 
         this.#status = Availability.free
         this.#currentCall = null
+        this.#lastInCall = new Date()
     }
 
     addListener(eventType: EmployeeEvent, listener: (call: Call) => void) {

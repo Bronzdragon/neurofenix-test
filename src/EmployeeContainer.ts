@@ -40,8 +40,14 @@ export default class EmployeeContainer {
             return this.getAvailableEmpoyee(employeeRankOrder[nextIndex])
         }
 
-        // Get a random available employee.
-        return availableEmployees[Math.floor(Math.random() * availableEmployees.length)]
+        // Sort employees by longest not in a call.
+        availableEmployees.sort((a, b) => {
+            if(!a.lastInCall) return -1
+            if(!b.lastInCall) return 1
+            return a.lastInCall.getTime() - b.lastInCall.getTime()
+        })
+        
+        return availableEmployees[0]
     }
 
     get length() {
