@@ -155,7 +155,8 @@ export async function promptForEmployee(): Promise<Employee|null> {
         }
     ];
 
-    let { name, rank, id } = await prompts(questions) as EmployeePromptType
+    const { name, rank, id } = await prompts(questions) as EmployeePromptType
+    // If the user cancels with ctrl+c, these values would end up as undefined.
     if(!name || !rank || !id) return null;
 
     currentId = Math.max(currentId, id)

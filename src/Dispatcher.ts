@@ -6,8 +6,6 @@ export default class Dispatcher {
     #container = new EmployeeContainer()
     #callQueue: Call[] = []
 
-    constructor() { }
-
     dispatchCall(call: Call) {
         this.#callQueue.push(call)
 
@@ -64,8 +62,8 @@ export default class Dispatcher {
         const highPrioCallCount = this.#callQueue.length - lowPrioCallCount
         
         const returnValue = [
-            lowPrioCallCount + " low priority calls",
-            highPrioCallCount + " high prioprity calls",
+            String(lowPrioCallCount) + " low priority calls",
+            String(highPrioCallCount) + " high prioprity calls",
         ]
 
         if (this.hasEmployees()) {

@@ -22,13 +22,10 @@ if (args["--help"]) {
     exit(0);
 }
 
-run().catch(error => {
-    console.error(error)
-    exit(1)
-})
 
 
-async function run() {
+
+const run = async () => {
     const generator = new CallGenerator()
     const dispatcher = new Dispatcher()
 
@@ -46,6 +43,11 @@ async function run() {
 
     while (await promptMainMenu(dispatcher, generator)) { /* Keep running the main menu. */ }
 }
+
+run().catch(error => {
+    console.error(error)
+    exit(1)
+})
 
 type RawPersonType = {
     name: string
@@ -82,7 +84,7 @@ function parseEmployeesFromJSON(input: string) {
 }
 
 async function promptMainMenu(dispatcher: Dispatcher, generator: CallGenerator): Promise<true> {
-    const result = await prompts({
+    const result: { value: () => void } = await prompts({
         type: 'select',
         name: 'value',
         message: 'What would you like to do?',
@@ -91,11 +93,10 @@ async function promptMainMenu(dispatcher: Dispatcher, generator: CallGenerator):
             { title: 'Remove employees', disabled: !dispatcher.hasEmployees(), value: () => promptRemoveEmployees(dispatcher) },
             { title: 'Show employees', disabled: !dispatcher.hasEmployees(), value: () => promptShowEmployees(dispatcher) },
             { title: 'Show calls', value: () => promptShowCalls(dispatcher) },
-            { title: 'Generate calls', value: () => promptGenerateCalls(generator, dispatcher) },
+            { title: 'Generate calls', value: () => promptGenerateCalls(generator) },
             { title: 'Set the options for automatic call generation', value: () => promptCallGeneratorOptions(generator) },
             { title: 'Quit', value: () => { exit(0) } },
         ],
-        // initial: 1
     })
 
     await result.value()
@@ -104,7 +105,7 @@ async function promptMainMenu(dispatcher: Dispatcher, generator: CallGenerator):
 }
 
 async function promptAddEmployees(dispatcher: Dispatcher) {
-    const { value } = await prompts({
+    const { value }: { value: 'file' | 'manual' } = await prompts({
         type: 'select',
         name: 'value',
         message: 'Would you like to load from a file, or enter employees manually?',
@@ -116,7 +117,7 @@ async function promptAddEmployees(dispatcher: Dispatcher) {
     })
 
     if (value === 'file') {
-        const { path } = await prompts({
+        const { path }: { path: string } = await prompts({
             type: 'text',
             name: 'path',
             message: `Path to file...`,
@@ -151,7 +152,7 @@ async function promptAddEmployees(dispatcher: Dispatcher) {
 }
 
 async function promptRemoveEmployees(dispatcher: Dispatcher) {
-    const peopleToDelete = await prompts({
+    const { value: peopleToDelete }: { value: Employee[] } = await prompts({
         type: 'multiselect',
         name: 'value',
         message: 'Choose the employees to remove.',
@@ -159,7 +160,7 @@ async function promptRemoveEmployees(dispatcher: Dispatcher) {
         hint: '- Space to select. Return to submit'
     })
 
-    dispatcher.removeEmployee(peopleToDelete.value)
+    dispatcher.removeEmployee(peopleToDelete)
 }
 
 function promptShowEmployees(dispatcher: Dispatcher) {
@@ -168,43 +169,49 @@ function promptShowEmployees(dispatcher: Dispatcher) {
 
 function promptShowCalls(dispatcher: Dispatcher) {
     console.log(dispatcher.printCalls())
-    //console.log("TODO: Display the status of all ongoing calls.")
 }
 
-function promptGenerateCalls(generator: CallGenerator, dispatcher: Dispatcher) {
+function promptGenerateCalls(generator: CallGenerator) {
     return generator.promptGenerateCalls()
 }
 
+enum CallGeneratorOptions {
+    time,
+    length,
+    initialSeverity,
+    upgradeChance,
+    back
+}
 async function promptCallGeneratorOptions(generator: CallGenerator) {
     let done = false;
     do {
-        const { choice } = await prompts({
+        const { choice }: { choice: CallGeneratorOptions } = await prompts({
             type: 'select',
             name: 'choice',
             message: 'Which option would you like to adjust?',
             choices: [
-                { title: 'Time between calls.', value: 'time' },
-                { title: 'Length of calls.', value: 'length' },
-                { title: 'Ratio of the call severity.', value: 'severity' },
-                { title: 'Ratio of calls that upgrade in severity.', value: 'upgrade' },
-                { title: 'Go back.', value: 'back' },
+                { title: 'Time between calls.', value: CallGeneratorOptions.time },
+                { title: 'Length of calls.', value: CallGeneratorOptions.length },
+                { title: 'Ratio of the calls initial severity.', value: CallGeneratorOptions.initialSeverity },
+                { title: 'Ratio of calls that upgrade in severity.', value: CallGeneratorOptions.upgradeChance },
+                { title: 'Go back.', value: CallGeneratorOptions.back },
             ],
         })
 
         switch (choice) {
-            case 'time':
+            case CallGeneratorOptions.time:
                 await generator.promptTime()
                 break;
-            case 'length':
+            case CallGeneratorOptions.length:
                 await generator.promptLength()
                 break;
-            case 'severity':
+            case CallGeneratorOptions.initialSeverity:
                 await generator.promptSeverity()
                 break;
-            case 'upgrade':
+            case CallGeneratorOptions.upgradeChance:
                 await generator.promptUpgrade()
                 break;
-            case 'back': // falls through
+            case CallGeneratorOptions.back: // falls through
             default:
                 done = true;
         }

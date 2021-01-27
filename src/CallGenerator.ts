@@ -1,5 +1,4 @@
-import { format } from "path"
-import prompts, { prompt } from "prompts"
+import prompts from "prompts"
 import Call, { Severity } from "./Call"
 
 // Time is in seconds.
@@ -73,20 +72,23 @@ export default class CallGenerator {
 
     // Adjust the time between calls
     async promptTime() {
-        const { min, max } = await prompts([{
+        const { min, max }: { min: number, max: number } = await prompts([{
             type: 'number',
             name: 'min',
             message: 'Minimum amount of time between calls?',
             increment: 5,
             initial: this.#minTime,
+            min: 0,
         }, {
             type: 'number',
             name: 'max',
             message: 'Maxium amount of time between calls?',
             increment: 5,
             initial: this.#maxTime,
+            min: 0,
         }])
         if (!min || !max || min > max) {
+            console.log("Those choices are ")
             return
         }
 
@@ -102,12 +104,14 @@ export default class CallGenerator {
             message: 'Minimum call length?',
             increment: 5,
             initial: this.#minTime,
+            min: 0,
         }, {
             type: 'number',
             name: 'max',
             message: 'Maxium call length?',
             increment: 5,
             initial: this.#maxTime,
+            min: 0,
         }])
         if (!min || !max || min > max) {
             return
@@ -124,6 +128,8 @@ export default class CallGenerator {
             name: 'value',
             message: "Percentage of calls that start out as high severity?",
             initial: this.#severityRatio * 100,
+            min: 0,
+            max: 100,
         })
 
         if (!value) { return }
@@ -138,6 +144,8 @@ export default class CallGenerator {
             name: 'value',
             message: "Percentage of low priority calls that will need an upgrade during their lifetime?",
             initial: this.#upgradeRatio * 100,
+            min: 0,
+            max: 100,
         })
 
         if (!value) { return }
@@ -150,10 +158,12 @@ export default class CallGenerator {
             type: 'number',
             name: 'low',
             message: "How many low priority calls would you like to generate?",
+            min: 0,
         }, {
             type: 'number',
             name: 'high',
             message: "How many high priority calls would you like to generate?",
+            min: 0,
         }])
         const callsToReturn: Call[] = []
 

@@ -28,7 +28,7 @@ export default class EmployeeContainer {
     }
 
     getAvailableEmpoyee(minRank: EmployeeRank): Employee | null {
-        let availableEmployees = this.#employees.filter(employee => employee.available() && employee.rank === minRank)
+        const availableEmployees = this.#employees.filter(employee => employee.available() && employee.rank === minRank)
 
         if (availableEmployees.length < 1) {
             const nextIndex = employeeRankOrder.indexOf(minRank) + 1
