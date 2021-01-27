@@ -1,6 +1,16 @@
 import prompts from "prompts"
 import Call, { Severity } from "./Call"
 
+
+type rangePromptType = {
+    min?: number
+    max?: number
+}
+
+type percentPromptType = {
+    percent?: number
+}
+
 // Time is in seconds.
 export default class CallGenerator {
     // minimum and maximum duration in seconds before the next call
@@ -72,23 +82,10 @@ export default class CallGenerator {
 
     // Adjust the time between calls
     async promptTime() {
-        const { min, max }: { min: number, max: number } = await prompts([{
-            type: 'number',
-            name: 'min',
-            message: 'Minimum amount of time between calls?',
-            increment: 5,
-            initial: this.#minTime,
-            min: 0,
-        }, {
-            type: 'number',
-            name: 'max',
-            message: 'Maxium amount of time between calls?',
-            increment: 5,
-            initial: this.#maxTime,
-            min: 0,
-        }])
+        const [min, max] = await this.promptRange("Minimum amount of time between calls?", "Maxium amount of time between calls?")
+
         if (!min || !max || min > max) {
-            console.log("Those choices are ")
+            console.log("Those choices are not valid. Keeping previous values.")
             return
         }
 
@@ -98,22 +95,10 @@ export default class CallGenerator {
 
     // Adjust the length between calls
     async promptLength() {
-        const { min, max } = await prompts([{
-            type: 'number',
-            name: 'min',
-            message: 'Minimum call length?',
-            increment: 5,
-            initial: this.#minTime,
-            min: 0,
-        }, {
-            type: 'number',
-            name: 'max',
-            message: 'Maxium call length?',
-            increment: 5,
-            initial: this.#maxTime,
-            min: 0,
-        }])
+        const [min, max] = await this.promptRange("Minimum call length?", "Maximum call length?")
+
         if (!min || !max || min > max) {
+            console.log("Those choices are not valid. Keeping previous values.")
             return
         }
 
@@ -121,40 +106,63 @@ export default class CallGenerator {
         this.#maxTime = max
     }
 
+    private async promptRange(minQuestion: string, maxQuestion: string): Promise<[number | undefined, number | undefined]> {
+        const { min, max }: rangePromptType = await prompts([{
+            type: 'number',
+            name: 'min',
+            message: minQuestion,
+            increment: 5,
+            initial: this.#minTime,
+            min: 0,
+        }, {
+            type: 'number',
+            name: 'max',
+            message: maxQuestion,
+            increment: 5,
+            initial: this.#maxTime,
+            min: 0,
+        }])
+
+        return [min, max]
+    }
+
     // Ajust the severity ratio of new calls
     async promptSeverity() {
-        const { value }: { value: number } = await prompts({
-            type: 'number',
-            name: 'value',
-            message: "Percentage of calls that start out as high severity?",
-            initial: this.#severityRatio * 100,
-            min: 0,
-            max: 100,
-        })
+        const result = await this.promptPercentage(
+            "Percentage of calls that start out as high severity?",
+            this.#severityRatio * 100
+        )
+        if (!result) { return }
 
-        if (!value) { return }
-
-        this.#severityRatio = value / 100
+        this.#severityRatio = result / 100
     }
 
     // Adjust the likeyhood a low severity call needs to be upgraded
     async promptUpgrade() {
-        const { value }: { value: number } = await prompts({
+        const result = await this.promptPercentage(
+            "Percentage of low priority calls that will need an upgrade during their lifetime?",
+            this.#upgradeRatio * 100
+        )
+        if (!result) { return }
+
+        this.#upgradeRatio = result / 100
+    }
+
+    private async promptPercentage(message: string, initial?: number): Promise<number | undefined> {
+        const { percent }: percentPromptType = await prompts({
             type: 'number',
-            name: 'value',
-            message: "Percentage of low priority calls that will need an upgrade during their lifetime?",
-            initial: this.#upgradeRatio * 100,
+            name: 'percent',
+            message,
+            initial: initial,
             min: 0,
             max: 100,
         })
 
-        if (!value) { return }
-
-        this.#upgradeRatio = value / 100
+        return percent;
     }
 
     async promptGenerateCalls(): Promise<Call[]> {
-        const { low, high }: { low: number, high: number } = await prompts([{
+        const { low = 0, high = 0 }: { low?: number, high?: number } = await prompts([{
             type: 'number',
             name: 'low',
             message: "How many low priority calls would you like to generate?",

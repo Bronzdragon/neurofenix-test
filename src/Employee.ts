@@ -124,9 +124,9 @@ export default class Employee {
 }
 
 type EmployeePromptType = {
-    id: number,
-    rank: keyof typeof EmployeeRank,
-    name: string
+    id?: number,
+    rank?: keyof typeof EmployeeRank,
+    name?: string
 }
 
 export async function promptForEmployee(): Promise<Employee|null> {
@@ -155,7 +155,7 @@ export async function promptForEmployee(): Promise<Employee|null> {
         }
     ];
 
-    const { name, rank, id } = await prompts(questions) as EmployeePromptType
+    const { name, rank, id }: EmployeePromptType = await prompts(questions)
     // If the user cancels with ctrl+c, these values would end up as undefined.
     if(!name || !rank || !id) return null;
 

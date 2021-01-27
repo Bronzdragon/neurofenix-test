@@ -83,8 +83,11 @@ function parseEmployeesFromJSON(input: string) {
     return employeeObjects
 }
 
+type MainMenuPromptType = {
+    value?: () => void
+}
 async function promptMainMenu(dispatcher: Dispatcher, generator: CallGenerator): Promise<true> {
-    const result: { value: () => void } = await prompts({
+    const {value}: MainMenuPromptType = await prompts({
         type: 'select',
         name: 'value',
         message: 'What would you like to do?',
@@ -99,13 +102,18 @@ async function promptMainMenu(dispatcher: Dispatcher, generator: CallGenerator):
         ],
     })
 
-    await result.value()
+    if(value){
+        await value()
+    }
 
     return true;
 }
 
+type AddEmployeesPromptType = {
+    value?: 'file' | 'manual'
+}
 async function promptAddEmployees(dispatcher: Dispatcher) {
-    const { value }: { value: 'file' | 'manual' } = await prompts({
+    const { value }: AddEmployeesPromptType = await prompts({
         type: 'select',
         name: 'value',
         message: 'Would you like to load from a file, or enter employees manually?',
@@ -151,8 +159,11 @@ async function promptAddEmployees(dispatcher: Dispatcher) {
     }
 }
 
+type RemoveEmployeesPromptType = {
+    value?: Employee[]
+}
 async function promptRemoveEmployees(dispatcher: Dispatcher) {
-    const { value: peopleToDelete }: { value: Employee[] } = await prompts({
+    const { value: peopleToDelete }: RemoveEmployeesPromptType = await prompts({
         type: 'multiselect',
         name: 'value',
         message: 'Choose the employees to remove.',
@@ -160,7 +171,9 @@ async function promptRemoveEmployees(dispatcher: Dispatcher) {
         hint: '- Space to select. Return to submit'
     })
 
-    dispatcher.removeEmployee(peopleToDelete)
+    if(peopleToDelete) {
+        dispatcher.removeEmployee(peopleToDelete)
+    }
 }
 
 function promptShowEmployees(dispatcher: Dispatcher) {
@@ -182,10 +195,15 @@ enum CallGeneratorOptions {
     upgradeChance,
     back
 }
+        
+type CallGeneratorOptionsPromptType = {
+    choice?: CallGeneratorOptions
+}
+
 async function promptCallGeneratorOptions(generator: CallGenerator) {
     let done = false;
     do {
-        const { choice }: { choice: CallGeneratorOptions } = await prompts({
+        const { choice }: CallGeneratorOptionsPromptType = await prompts({
             type: 'select',
             name: 'choice',
             message: 'Which option would you like to adjust?',
@@ -213,7 +231,7 @@ async function promptCallGeneratorOptions(generator: CallGenerator) {
                 break;
             case CallGeneratorOptions.back: // falls through
             default:
-                done = true;
+                done = true
         }
     } while (!done)
 }
